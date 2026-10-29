@@ -1,0 +1,90 @@
+##
+#
+# Well-balancedness test on a curvilinear mesh, constant potential
+# temperature background state (Section 7.2, Figures 3 and 4 of
+# arXiv:2509.10311):
+#
+#   theta = 300 K,  T = theta - g y / c_p,  p = p_0 (T / theta)^(c_p / R),
+#   rho = p / (R T),
+#
+# at rest in [0,1000]^2, with R = 287, c_p = 1004.5, p_0 = 10^5 and
+# g = 9.81 (the paper does not state the constants for this test case).
+#
+##
+
+subsection A - Scheduler
+  set basename          = well-balanced-adiabatic-dirichlet
+  set tasks             = error evaluation, vtu output
+  set final time        = 5000
+  set timer granularity = 50
+end
+
+subsection B - Equation
+  set dimension          = 2
+  set equation           = atmospheric euler
+  set c_v                = 717.5
+  set gamma              = 1.4
+  set gravity            = 9.81
+  set reference pressure = 100000
+end
+
+subsection C - Discretization
+  set geometry              = rectangular domain
+  set finite element ansatz = cG Q1
+  set mesh refinement       = 0
+
+  #
+  # The curvilinear mapping (170) of the reference square [-1,1]^2 onto
+  # the physical domain [0,1000]^2. The boundaries remain straight because
+  # sin(pi xi) and sin(pi eta) vanish at xi, eta = +-1.
+  #
+  subsection rectangular domain
+    set position bottom left      = -1, -1
+    set position top right        =  1,  1
+    set transformation            = 500*(1 + x + 0.1*sin(3.141592653589793*x)*sin(3.141592653589793*y)); 500*(1 + y + 0.1*sin(3.141592653589793*x)*sin(3.141592653589793*y))
+    set subdivisions x            = 16
+    set subdivisions y            = 16
+    set boundary condition left   = dirichlet
+    set boundary condition right  = dirichlet
+    set boundary condition bottom = dirichlet
+    set boundary condition top    = dirichlet
+  end
+end
+
+subsection E - InitialValues
+  set configuration = stratified
+  set position      = 0, 0
+
+  subsection stratified
+    set velocity x expression = 0
+    set velocity y expression = 0
+    set theta expression      = 300
+  end
+end
+
+subsection H - TimeIntegrator
+  set cfl min               = 0.5
+  set cfl max               = 0.5
+  set cfl recovery strategy = none
+  set tau_max               = 0.01
+end
+
+subsection I - VTUOutput
+  subsection full
+    set vtu output quantities = rho, v_1, v_2, theta, p
+  end
+end
+
+#
+# The analytic solution is the (steady) initial state, so the error is the
+# deviation from the hydrostatic balance. Note that the reported value is
+# the sum over all error quantities: set the error quantities to either v_1
+# or v_2 to obtain ||u||_2 or ||w||_2 of Figure 4 individually.
+#
+subsection K - ErrorEvaluation
+  set trigger            = timer tick
+  set trigger multiplier = 1
+  set error quantities   = v_1, v_2
+  set error normalize    = false
+  set error norms        = Linf, L2
+end

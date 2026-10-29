@@ -1,0 +1,129 @@
+subsection A - TimeLoop
+  set basename                            = star-states-reference
+  set final time                          = 0.2
+  set enforce final time                  = false
+  set timer granularity                   = 0.002
+  set enable output full                  = true
+  set enable output levelsets             = false
+  set enable compute error                = false
+  set enable compute quantities           = false
+  set enable mesh adaptivity              = false
+  set timer output full multiplier        = 1
+  set timer output levelsets multiplier   = 1
+  set timer compute quantities multiplier = 1
+  set error quantities                    = rho, m, rho_theta
+  set error normalize                     = true
+  set resume                              = false
+  set resume at time zero                 = false
+  set terminal update interval            = 5
+  set terminal correct for hyperthreading = true
+  set checkpoint update interval          = 0
+  set debug command                       = 
+  set debug filename                      = 
+end
+subsection B - Equation
+  set dimension                     = 1
+  set equation                      = atmospheric euler
+  set c_v                           = 2.5
+  set gamma                         = 1.4
+  set gravity                       = 1
+  set reference pressure            = 1
+  set reference density             = 1
+  set vacuum state relaxation small = 100
+  set vacuum state relaxation large = 10000
+end
+subsection C - Discretization
+  set finite element ansatz = cG Q1
+  set mesh type             = parallel shared
+  set geometry              = rectangular domain
+  set mesh refinement       = 6
+  set mesh writeout         = true
+  set mesh distortion       = 0
+  subsection rectangular domain
+    set position bottom left     = 0
+    set position top right       = 1
+    set grading push forward     = x
+    set grading pull back        = x
+    set subdivisions x           = 100
+    set boundary condition left  = slip
+    set boundary condition right = slip
+    set simplex mesh             = false
+  end
+end
+subsection D - OfflineData
+  set treat fe_nothing as boundary            = true
+  set incidence matrix relaxation even degree = 0.5
+  set incidence matrix relaxation odd degree  = 0
+end
+subsection E - InitialValues
+  set configuration = exact riemann solution
+  set direction     = 1
+  set position      = 0.5
+  set perturbation  = 0
+  subsection exact riemann solution
+    set primitive state left  = 1.0, 0, 1.0
+    set primitive state right = 0.125, 0, 1.545
+  end
+end
+subsection F - HyperbolicModule
+  subsection indicator
+    set evc factor = 1
+  end
+  subsection limiter
+    set iterations            = 0
+    set newton tolerance      = 1e-10
+    set newton max iterations = 2
+    set relaxation factor     = 1
+  end
+end
+subsection H - TimeIntegrator
+  set cfl min                  = 0.4
+  set cfl max                  = 0.4
+  set cfl recovery strategy    = cruise control
+  set acceptable tau_max ratio = 2
+  set tau_max                  = 1.79769e+308
+  set time stepping scheme     = erk 33
+end
+subsection I - MeshAdaptor
+  set adaptation strategy           = smoothness indicators
+  set marking strategy              = fixed threshold
+  set time point selection strategy = simulation cycle
+  subsection adaptation strategies
+    set random adaptation: mersenne_twister_seed  = 42
+    set smoothness indicators: quantities         = 
+    set smoothness indicators: local global ratio = 0.5
+    set smoothness indicators: min cutoff         = 0
+    set smoothness indicators: max cutoff         = 1e+16
+    set smoothness indicators: stencil size       = 15
+  end
+  subsection marking strategies
+    set coarsening threshold     = 0.25
+    set refinement threshold     = 0.75
+    set absolute threshold       = false
+    set minimal refinement level = 0
+    set maximal refinement level = 1000
+  end
+  subsection time point selection strategies
+    set fixed time points          = 
+    set simulation cycle: interval = 10
+  end
+  subsection mass transfer limiter
+    set iterations            = 2
+    set newton tolerance      = 1e-10
+    set newton max iterations = 2
+    set relaxation factor     = 1
+  end
+end
+subsection J - VTUOutput
+  set schlieren beta             = 10
+  set schlieren recompute bounds = true
+  set schlieren quantities       = rho
+  set use mpi io                 = true
+  set manifolds                  = 
+  set vtu output quantities      = rho, theta, p, v 
+end
+subsection K - Quantities
+  set interior manifolds           = 
+  set boundary manifolds           = 
+  set clear statistics on writeout = true
+end
